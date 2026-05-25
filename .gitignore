@@ -1,19 +1,16 @@
 .env
 
-# Foundry
-cache/
-out/
-broadcast/
-
 # JS
 node_modules/
 package-lock.json
 
 # Hardhat
+artifacts/
+cache/
+typechain-types/
 solidity-files-cache.json
 deployments/
 
-artifacts/
-
 # Coverage
 lcov.info
+coverage/

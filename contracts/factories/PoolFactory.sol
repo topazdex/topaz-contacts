@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
 import {IPoolFactory} from "../interfaces/factories/IPoolFactory.sol";
@@ -46,10 +46,6 @@ contract PoolFactory is IPoolFactory {
         return allPools.length;
     }
 
-    /// @inheritdoc IPoolFactory
-    function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address) {
-        return fee > 1 ? address(0) : fee == 1 ? _getPool[tokenA][tokenB][true] : _getPool[tokenA][tokenB][false];
-    }
 
     /// @inheritdoc IPoolFactory
     function getPool(address tokenA, address tokenB, bool stable) external view returns (address) {
@@ -114,13 +110,6 @@ contract PoolFactory is IPoolFactory {
     function getFee(address pool, bool _stable) public view returns (uint256) {
         uint256 fee = customFee[pool];
         return fee == ZERO_FEE_INDICATOR ? 0 : fee != 0 ? fee : _stable ? stableFee : volatileFee;
-    }
-
-    /// @inheritdoc IPoolFactory
-    function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool) {
-        if (fee > 1) revert FeeInvalid();
-        bool stable = fee == 1;
-        return createPool(tokenA, tokenB, stable);
     }
 
     /// @inheritdoc IPoolFactory

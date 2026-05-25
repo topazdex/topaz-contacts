@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -320,7 +320,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         } else {
             liquidity = Math.min((_amount0 * _totalSupply) / _reserve0, (_amount1 * _totalSupply) / _reserve1);
         }
-        if (liquidity == 0) revert InsufficientLiquidityMinted();
+        if (liquidity < MINIMUM_LIQUIDITY) revert InsufficientLiquidityMinted();
         _mint(to, liquidity);
 
         _update(_balance0, _balance1, _reserve0, _reserve1);
@@ -408,7 +408,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         return (3 * x0 * ((y * y) / 1e18)) / 1e18 + ((((x0 * x0) / 1e18) * x0) / 1e18);
     }
 
-    function _get_y(uint256 x0, uint256 xy, uint256 y) internal view returns (uint256) {
+    function _get_y(uint256 x0, uint256 xy, uint256 y) internal pure returns (uint256) {
         for (uint256 i = 0; i < 255; i++) {
             uint256 k = _f(x0, y);
             if (k < xy) {
@@ -423,9 +423,10 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
                         // We found the correct answer. Return y
                         return y;
                     }
-                    if (_k(x0, y + 1) > xy) {
-                        // If _k(x0, y + 1) > xy, then we are close to the correct answer.
-                        // There's no closer answer than y + 1
+                    // Caller already scaled x0/y to 1e18, so probe the next integer
+                    // using the pure 1e18-space invariant rather than _k (which would
+                    // re-divide by token decimals and produce the wrong comparison).
+                    if (_f(x0, y + 1) > xy) {
                         return y + 1;
                     }
                     dy = 1;

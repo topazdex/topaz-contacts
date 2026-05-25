@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -33,6 +33,7 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
     bool public immutable isPool;
 
     uint256 internal constant DURATION = 7 days; // rewards are released over 7 days
+    uint256 internal constant FEE_CLAIM_THRESHOLD = DURATION / 7;
     uint256 internal constant PRECISION = 10 ** 18;
 
     /// @inheritdoc IGauge
@@ -84,16 +85,16 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
             uint256 _fees0 = fees0 + claimed0;
             uint256 _fees1 = fees1 + claimed1;
             (address _token0, address _token1) = IPool(stakingToken).tokens();
-            if (_fees0 > DURATION) {
+            if (_fees0 >= FEE_CLAIM_THRESHOLD) {
                 fees0 = 0;
-                IERC20(_token0).safeApprove(feesVotingReward, _fees0);
+                IERC20(_token0).safeIncreaseAllowance(feesVotingReward, _fees0);
                 IReward(feesVotingReward).notifyRewardAmount(_token0, _fees0);
             } else {
                 fees0 = _fees0;
             }
-            if (_fees1 > DURATION) {
+            if (_fees1 >= FEE_CLAIM_THRESHOLD) {
                 fees1 = 0;
-                IERC20(_token1).safeApprove(feesVotingReward, _fees1);
+                IERC20(_token1).safeIncreaseAllowance(feesVotingReward, _fees1);
                 IReward(feesVotingReward).notifyRewardAmount(_token1, _fees1);
             } else {
                 fees1 = _fees1;
@@ -231,8 +232,10 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
         // This keeps the reward rate in the right range, preventing overflows due to
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
+        // Use multiplication form to avoid spurious reverts from integer division
+        // truncation when (rewardRate * timeUntilNext) ≈ balance.
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        if (rewardRate > balance / timeUntilNext) revert RewardRateTooHigh();
+        if (rewardRate * timeUntilNext > balance) revert RewardRateTooHigh();
 
         lastUpdateTime = timestamp;
         periodFinish = timestamp + timeUntilNext;

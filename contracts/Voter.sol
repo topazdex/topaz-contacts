@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -192,6 +192,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function poke(uint256 _tokenId) external nonReentrant {
+        if (!IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId)) revert NotApprovedOrOwner();
         if (block.timestamp <= ProtocolTimeLibrary.epochVoteStart(block.timestamp)) revert DistributeWindow();
         uint256 _weight = IVotingEscrow(ve).balanceOfNFT(_tokenId);
         _poke(_tokenId, _weight);
@@ -274,6 +275,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         uint256 _timestamp = block.timestamp;
         if (_timestamp > ProtocolTimeLibrary.epochVoteEnd(_timestamp)) revert SpecialVotingWindow();
         lastVoted[_tokenId] = _timestamp;
+        _reset(_tokenId);
         IVotingEscrow(ve).depositManaged(_tokenId, _mTokenId);
         uint256 _weight = IVotingEscrow(ve).balanceOfNFTAt(_mTokenId, block.timestamp);
         _poke(_mTokenId, _weight);
@@ -488,9 +490,8 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         uint256 _claimable = claimable[_gauge];
         if (_claimable > IGauge(_gauge).left() && _claimable > DURATION) {
             claimable[_gauge] = 0;
-            IERC20(rewardToken).safeApprove(_gauge, _claimable);
+            IERC20(rewardToken).safeIncreaseAllowance(_gauge, _claimable);
             IGauge(_gauge).notifyRewardAmount(_claimable);
-            IERC20(rewardToken).safeApprove(_gauge, 0);
             emit DistributeReward(_msgSender(), _gauge, _claimable);
         }
     }

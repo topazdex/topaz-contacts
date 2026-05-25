@@ -1,6 +1,6 @@
-# Protocol
+# Topaz Protocol
 
-All contracts for the Protocol, an AMM on EVMs inspired by Solidly.
+Smart contracts for the Topaz Protocol, a Solidly-style ve(3,3) AMM on **BNB Chain**. Forked from [Aerodrome Finance](https://github.com/aerodrome-finance/contracts).
 
 See `SPECIFICATION.md` for more detail.
 
@@ -13,14 +13,13 @@ See `SPECIFICATION.md` for more detail.
 | `Pool.sol` | AMM constant-product implementation similar to Uniswap V2 liquidity pools |
 | `Router.sol` | Handles multi-pool swaps, deposit/withdrawal, similar to Uniswap V2 Router interface |
 | `PoolFees.sol` | Stores the liquidity pool trading fees, these are kept separate from the reserves |
-| `ProtocolLibrary.sol` | Provides router-related helpers, eg. for price-impact calculations |
 | `FactoryRegistry.sol` | Registry of factories approved for creation of pools, gauges, bribes and managed rewards. |
 
 ### Tokenomy contracts
 
 | Filename | Description |
 | --- | --- |
-| `Aero.sol` | Protocol ERC20 token |
+| `Topaz.sol` | Protocol ERC20 token |
 | `VotingEscrow.sol` | Protocol ERC-721 (ve)NFT representing the protocol vote-escrow lock. Beyond standard ve-type functions, there is also the ability to merge, split and create managed nfts. |
 | `Minter.sol` | Protocol token minter. Distributes emissions to `Voter.sol` and rebases to `RewardsDistributor.sol`. |
 | `RewardsDistributor.sol` | Is used to handle the rebases distribution for (ve)NFTs/lockers. |
@@ -39,8 +38,8 @@ See `SPECIFICATION.md` for more detail.
 | `FeesVotingReward.sol` | Stores LP fees (from the gauge via `PoolFees.sol`) to be distributed for the current voting epoch to it's voters. |
 | `BribeVotingReward.sol` | Stores the users/externally provided rewards for the current voting epoch to it's voters. These are deposited externally every week. |
 | `ManagedReward.sol` | Staking implementation for managed veNFTs used by `LockedManagedReward.sol` and `FreeManagedReward.sol` which inherits `Reward.sol`.  Rewards can be earned passively by veNFTs who delegate their voting power to a "managed" veNFT.
-| `LockedManagedReward.sol` | Handles "locked" rewards (i.e. Aero rewards / rebases that are compounded) for managed NFTs. Rewards are not distributed and only returned to `VotingEscrow.sol` when the user withdraws from the managed NFT. | 
-| `FreeManagedReward.sol` | Handles "free" (i.e. unlocked) rewards for managed NFTs. Any rewards earned by a managed NFT that a manager passes on will be distributed to the users that deposited into the managed NFT. | 
+| `LockedManagedReward.sol` | Handles "locked" rewards (i.e. TOPAZ rewards / rebases that are compounded) for managed NFTs. Rewards are not distributed and only returned to `VotingEscrow.sol` when the user withdraws from the managed NFT. |
+| `FreeManagedReward.sol` | Handles "free" (i.e. unlocked) rewards for managed NFTs. Any rewards earned by a managed NFT that a manager passes on will be distributed to the users that deposited into the managed NFT. |
 
 ### Governance contracts
 
@@ -50,52 +49,64 @@ See `SPECIFICATION.md` for more detail.
 | `EpochGovernor.sol` | A simple epoch-based governance contract used exclusively for adjusting emissions. |
 
 
+## Setup
+
+```
+yarn install
+yarn compile
+```
+
 ## Testing
 
-This repository uses Foundry for testing and deployment. 
-
-Foundry Setup
-
 ```
-forge install
-forge build
-forge test
+yarn test
 ```
-
-## Base Mainnet Fork Tests
-
-In order to run mainnet fork tests against base, inherit `BaseTest` in `BaseTest.sol` in your new class and set the `deploymentType` variable to `Deployment.FORK`. The `BASE_RPC_URL` field must be set in `.env`. Optionally, `BLOCK_NUMBER` can be set in the `.env` file or in the test file if you wish to test against a consistent fork state (this will make tests faster).
-
 
 ## Lint
 
 `yarn format` to run prettier.
 
-`yarn lint` to run solhint (currently disabled in CI).
+`yarn lint` to run solhint.
 
 ## Deployment
 
-See `script/README.md` for more detail.
+Deploy scripts use `hardhat-deploy` and target BNB Chain (mainnet chainId 56, testnet chainId 97).
+
+```
+yarn deploy:testnet
+yarn deploy:mainnet
+```
+
+Configure your `.env` file (see `.env.example`) with `PRIVATE_KEY_DEPLOY` and optionally `BSC_MAINNET_RPC_URL` / `BSC_TESTNET_RPC_URL` and `BSCSCAN_API_KEY`.
 
 ### Access Control
 See `PERMISSIONS.md` for more detail.
 
-## Deployment
+## BNB Chain Mainnet Deployment
 
-| Name               | Address                                                                                                                               |
-| :----------------- | :------------------------------------------------------------------------------------------------------------------------------------ |
-| ArtProxy               | [0xE9992487b2EE03b7a91241695A58E0ef3654643E](https://basescan.org/address/0xE9992487b2EE03b7a91241695A58E0ef3654643E#code) |
-| RewardsDistributor               | [0x227f65131A261548b057215bB1D5Ab2997964C7d](https://basescan.org/address/0x227f65131A261548b057215bB1D5Ab2997964C7d#code) |
-| FactoryRegistry               | [0x5C3F18F06CC09CA1910767A34a20F771039E37C0](https://basescan.org/address/0x5C3F18F06CC09CA1910767A34a20F771039E37C0#code) |
-| Forwarder               | [0x15e62707FCA7352fbE35F51a8D6b0F8066A05DCc](https://basescan.org/address/0x15e62707FCA7352fbE35F51a8D6b0F8066A05DCc#code) |
-| GaugeFactory               | [0x35f35cA5B132CaDf2916BaB57639128eAC5bbcb5](https://basescan.org/address/0x35f35cA5B132CaDf2916BaB57639128eAC5bbcb5#code) |
-| ManagedRewardsFactory               | [0xFdA1fb5A2a5B23638C7017950506a36dcFD2bDC3](https://basescan.org/address/0xFdA1fb5A2a5B23638C7017950506a36dcFD2bDC3#code) |
-| Minter               | [0xeB018363F0a9Af8f91F06FEe6613a751b2A33FE5](https://basescan.org/address/0xeB018363F0a9Af8f91F06FEe6613a751b2A33FE5#code) |
-| PoolFactory               | [0x420DD381b31aEf6683db6B902084cB0FFECe40Da](https://basescan.org/address/0x420DD381b31aEf6683db6B902084cB0FFECe40Da#code) |
-| Router               | [0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43](https://basescan.org/address/0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43#code) |
-| AERO               | [0x940181a94A35A4569E4529A3CDfB74e38FD98631](https://basescan.org/address/0x940181a94A35A4569E4529A3CDfB74e38FD98631#code) |
-| Voter               | [0x16613524e02ad97eDfeF371bC883F2F5d6C480A5](https://basescan.org/address/0x16613524e02ad97eDfeF371bC883F2F5d6C480A5#code) |
-| VotingEscrow               | [0xeBf418Fe2512e7E6bd9b87a8F0f294aCDC67e6B4](https://basescan.org/address/0xeBf418Fe2512e7E6bd9b87a8F0f294aCDC67e6B4#code) |
-| VotingRewardsFactory               | [0x45cA74858C579E717ee29A86042E0d53B252B504](https://basescan.org/address/0x45cA74858C579E717ee29A86042E0d53B252B504#code) |
-| Pool               | [0xA4e46b4f701c62e14DF11B48dCe76A7d793CD6d7](https://basescan.org/address/0xA4e46b4f701c62e14DF11B48dCe76A7d793CD6d7#code) |
+| Name | Address |
+| :--- | :--- |
+| TOPAZ | [0xdf002282C1474C9592780618Adda7EaA99998Abd](https://bscscan.com/address/0xdf002282C1474C9592780618Adda7EaA99998Abd#code) |
+| VotingEscrow | [0xe951aC65EFE86682311ab0d8995E7A58750c5eB3](https://bscscan.com/address/0xe951aC65EFE86682311ab0d8995E7A58750c5eB3#code) |
+| Voter | [0x2F80F810a114223AC69E34E84E735CaD515dAD67](https://bscscan.com/address/0x2F80F810a114223AC69E34E84E735CaD515dAD67#code) |
+| Router | [0x1E98c8226e7d452e1888e3d3d2F929346321c6c3](https://bscscan.com/address/0x1E98c8226e7d452e1888e3d3d2F929346321c6c3#code) |
+| Minter | [0x606794d37991A426a189fD9FA8664D339A77f8ae](https://bscscan.com/address/0x606794d37991A426a189fD9FA8664D339A77f8ae#code) |
+| RewardsDistributor | [0x85e15e7Ad4f20d5ca3A1104B1c2CcE72f5F683dB](https://bscscan.com/address/0x85e15e7Ad4f20d5ca3A1104B1c2CcE72f5F683dB#code) |
+| PoolFactory | [0x65E6cD0eF5D3467030103cf3d433034E570b5784](https://bscscan.com/address/0x65E6cD0eF5D3467030103cf3d433034E570b5784#code) |
+| Pool (implementation) | [0xdC942D8e37cC20BCf9aD1Fe0111eE6c5908f3678](https://bscscan.com/address/0xdC942D8e37cC20BCf9aD1Fe0111eE6c5908f3678#code) |
+| GaugeFactory | [0xFc080D1EcD7c332022cebf942AEb62d5E1d4Cb08](https://bscscan.com/address/0xFc080D1EcD7c332022cebf942AEb62d5E1d4Cb08#code) |
+| VotingRewardsFactory | [0x4C303f7af7b8b05226440e4e12FF9a82F513716c](https://bscscan.com/address/0x4C303f7af7b8b05226440e4e12FF9a82F513716c#code) |
+| ManagedRewardsFactory | [0xe4b23F13b24232C1E68AD0575191216152AA9480](https://bscscan.com/address/0xe4b23F13b24232C1E68AD0575191216152AA9480#code) |
+| FactoryRegistry | [0x268d1C8a538Ecf6628838C11d581e1EABD13D6A4](https://bscscan.com/address/0x268d1C8a538Ecf6628838C11d581e1EABD13D6A4#code) |
+| Forwarder | [0xE79EB7c4D06ff38e6483921DE8e85A37eC7c731b](https://bscscan.com/address/0xE79EB7c4D06ff38e6483921DE8e85A37eC7c731b#code) |
+| VeArtProxy | [0x9612305fe63DFb84Da8f6d6261169F6B85026601](https://bscscan.com/address/0x9612305fe63DFb84Da8f6d6261169F6B85026601#code) |
+| AirdropDistributor | [0x7B1d8745079C85af80Ff7A7eA7C2C4769Eab5348](https://bscscan.com/address/0x7B1d8745079C85af80Ff7A7eA7C2C4769Eab5348#code) |
+| EpochGovernor | [0xbae5585Afb875A45292470078aa4D4A261749084](https://bscscan.com/address/0xbae5585Afb875A45292470078aa4D4A261749084#code) |
+| ProtocolGovernor | [0xbBCdCd30066cF25708F4A0aB9d9149D32Ea4C401](https://bscscan.com/address/0xbBCdCd30066cF25708F4A0aB9d9149D32Ea4C401#code) |
 
+## License
+
+Topaz is released under the [MIT License](LICENSE.md). This codebase is a fork
+of [Aerodrome Finance](https://github.com/aerodrome-finance/contracts), which
+derives from Velodrome and Solidly (originally released under BUSL-1.1 whose
+Change Date has now passed). See `LICENSE.md` for full attribution.

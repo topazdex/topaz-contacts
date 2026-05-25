@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -45,7 +45,7 @@ contract RewardsDistributor is IRewardsDistributor {
         address _token = ve.token();
         token = _token;
         minter = msg.sender;
-        IERC20(_token).safeApprove(_ve, type(uint256).max);
+        IERC20(_token).safeIncreaseAllowance(_ve, type(uint256).max);
     }
 
     function _checkpointToken() internal {
